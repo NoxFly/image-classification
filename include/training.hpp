@@ -13,7 +13,4 @@
 #include "image.hpp"
 
 
-void train(const bool multithreaded, const std::string& dataset, VecHistos& histosTrainFree, VecHistos& histosTrainFull);
-
-void train_seq(const std::string& path, VecHistos& histos);
-void train_par(const std::string& path, VecHistos& histos);
+void train(MapHistos* histos);

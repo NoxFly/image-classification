@@ -5,7 +5,6 @@
 
 Mat1b splitRGBChannels(const Mat3b& src);
 
-void processImage(const std::string& path, ImageHisto& hist);
-void processImageDebug();
+void processImage(const std::string& path, ImageHisto hist);
 
-void emptyHisto(ImageHisto& hist);
+ImageHisto emptyHisto();

@@ -7,6 +7,7 @@
 #include <stack>
 #include <mutex>
 #include <condition_variable>
+#include <algorithm>
 
 #include "file.hpp"
 #include "common.hpp"
@@ -22,7 +23,5 @@ struct TestResult {
 };
 
 
-TestResult test(const bool multithreaded, const std::string& dataset, VecHistos& histosTrainFree, VecHistos& histosTrainFull);
+void test(MapHistos* models);
 
-TestResult test_seq(const std::string& path, PlaceEnum expectation, VecHistos& modelsFree, VecHistos& modelsFull);
-TestResult test_par(const std::string& path, PlaceEnum expectation, VecHistos& modelsFree, VecHistos& modelsFull);
