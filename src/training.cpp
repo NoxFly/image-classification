@@ -17,11 +17,11 @@ void train(MapHistos* histos) {
 
 	std::string dataset;
 
-//#ifndef _DEBUG
+#ifdef _DEBUG
 	dataset = "DEBUG";
-//#else
-	//dataset = "RELEASE";
-//#endif
+#else
+	dataset = "RELEASE";
+#endif
 
 	const string trainPath = RESOURCES_PATH + dataset + "/" TRAIN_DIR;
 
@@ -69,6 +69,8 @@ void trainModel_seq(const std::string& trainDir, const std::string& modelName, M
 
 	uint i = 0;
 
+	std::cout << "0/" << fileCount << " processed";
+
 	for (const auto& entry : fs::directory_iterator(path)) {
 		string filepath = entry.path().string();
 
@@ -76,8 +78,8 @@ void trainModel_seq(const std::string& trainDir, const std::string& modelName, M
 
 		processImage(filepath, histos->at(modelName)[i]);
 
-		//cout << filepath << " processed" << endl;
-
-		i++;
+		std::cout << "\r" << ++i << "/" << fileCount << " processed";
 	}
+
+	std::cout << "\n";
 }

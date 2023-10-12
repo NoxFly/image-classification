@@ -6,9 +6,11 @@
 using namespace std;
 namespace fs = filesystem;
 
-
+#ifdef DEBUG
 TestResult testWithModels_seq(const string& path, const string& expectation, MapHistos* models);
-
+#else
+void testWithModels_seq(const string& path, MapHistos* models, ofstream& resultsFile);
+#endif
 
 // -------------------------------------------------------------------------------------
 // --------------------------------------- TESTS ---------------------------------------
@@ -16,11 +18,11 @@ TestResult testWithModels_seq(const string& path, const string& expectation, Map
 
 #ifndef _DEBUG
 void logTestResults(const TestResult& results, const string& type, const duration<float>& timeElapsed) {
-	std::stringstream accStream;
-	accStream << std::fixed << std::setprecision(2) << results.accuracy;
+	stringstream accStream;
+	accStream << fixed << setprecision(2) << results.accuracy;
 
-	std::stringstream lossStream;
-	lossStream << std::fixed << std::setprecision(2) << results.loss;
+	stringstream lossStream;
+	lossStream << fixed << setprecision(2) << results.loss;
 
 	const string fileCount = to_string(results.fileCount);
 	const string accuracy = accStream.str();
@@ -31,7 +33,7 @@ void logTestResults(const TestResult& results, const string& type, const duratio
 	const string spacesAccuracy = string(8 - accuracy.length(), ' ');
 	const string spacesLoss = string(6 - loss.length(), ' ');
 
-	cout
+	std::cout
 		<< type << spacesType << "| "
 		<< fileCount << spacesFileCount << "| "
 		<< accuracy << "%" << spacesAccuracy << "| "
@@ -42,9 +44,9 @@ void logTestResults(const TestResult& results, const string& type, const duratio
 #endif
 
 void test(MapHistos* models) {
-	std::string dataset;
+	string dataset;
 
-#ifndef _DEBUG
+#ifdef _DEBUG
 
 	cout
 		<< "Testing...\n\n"
@@ -64,13 +66,12 @@ void test(MapHistos* models) {
 
 	tp t0 = system_clock::now();
 
-#ifndef _DEBUG
+#ifdef _DEBUG
 
 	map<string, TestResult> modelResults;
 
 	for(auto entry = models->begin(); entry != models->end(); ++entry) {
 		tp tTestStart = system_clock::now();
-		//modelResults.insert({ entry.first, testWithModels(testPath + entry.first, entry.first, models) }); // parallel
 		modelResults.insert({ entry->first, testWithModels_seq(testPath + entry->first, entry->first, models) }); // sequential
 		tp tTestEnd = system_clock::now();
 		
@@ -97,7 +98,11 @@ void test(MapHistos* models) {
 
 #else
 
-	const TestResult results = testWithModels_seq(testPath, "", models);
+	ofstream resultsFile("output.csv", ofstream::out | ofstream::trunc);
+
+	testWithModels_seq(testPath, models, resultsFile);
+
+	resultsFile.close();
 
 #endif
 
@@ -105,7 +110,7 @@ void test(MapHistos* models) {
 
 	duration<float> testingTotalTime = t1 - t0;
 
-	cout << "Testing duration : " << (testingTotalTime.count() * 1000) << " ms\n" << endl;
+	std::cout << "Testing duration : " << (testingTotalTime.count() * 1000) << " ms\n" << endl;
 }
 
 
@@ -149,6 +154,7 @@ string testFile(const string& path, MapHistos* models) {
 	return min->first;
 }
 
+#ifdef _DEBUG
 TestResult testWithModels_seq(const string& path, const string& expectation, MapHistos* models) {
 	const size_t fileCount = fileCountInDir(path);
 
@@ -171,3 +177,30 @@ TestResult testWithModels_seq(const string& path, const string& expectation, Map
 		100 - acc
 	};
 }
+
+#else
+
+void testWithModels_seq(const string& path, MapHistos* models, ofstream& resultsFile) {
+	const size_t fileCount = fileCountInDir(path);
+
+	uint proceed = 0;
+
+	std::cout << "0/" << fileCount << " processed";
+
+	resultsFile << "Filename,Labels\n";
+
+	for (const auto& entry : fs::directory_iterator(path)) {
+		string filepath = entry.path().string();
+		string filename = filepath.substr(filepath.find_last_of("/\\") + 1);
+
+		const string prediction = testFile(filepath, models);
+		
+		resultsFile << filename << "," << prediction << "\n";
+		
+		std::cout << "\r" << ++proceed << "/" << fileCount << " processed";
+	}
+
+	std::cout << "\n";
+}
+
+#endif
